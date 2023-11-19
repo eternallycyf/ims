@@ -13,7 +13,9 @@ export class PersonService {
   }
 
   findOne(id: number) {
-    return `get: 参数 ${id} `;
+    return {
+      data: id,
+    };
   }
 
   update(id: number, updatePersonDto: UpdatePersonDto) {

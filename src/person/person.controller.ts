@@ -19,19 +19,19 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 export class PersonController {
   constructor(private readonly personService: PersonService) {}
 
-  @Post()
-  create(@Body() createPersonDto: CreatePersonDto) {
-    return this.personService.create(createPersonDto);
+  @Get(':id')
+  findOne(@Param('id') id: number) {
+    return this.personService.findOne(id);
   }
 
-  @Get()
+  @Get('')
   findAll(@Query('name') name: string, @Query('age') age: string) {
     return this.personService.findAll(name, age);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.personService.findOne(id);
+  @Post()
+  create(@Body() createPersonDto: CreatePersonDto) {
+    return this.personService.create(createPersonDto);
   }
 
   @Patch(':id')
