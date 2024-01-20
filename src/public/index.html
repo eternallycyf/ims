@@ -5,10 +5,10 @@
   <script src="https://unpkg.com/axios@0.24.0/dist/axios.min.js"></script>
 </head>
 <body>
+  <div>http://localhost:3000/static/index.html</div>
   <button onclick="handleGetFetchId()">url param</button>
   <button onclick="handleGetFetch()">发起Get请求</button>
   <button onclick="handlePostFetch()">发起Post请求</button>
-  <button onclick="handlePost2Fetch()">发起Post请求 urlencoded</button>
   <button onclick="handlePost2Fetch()">发起Post请求 urlencoded</button>
   <button onclick="handleJSONFetch()">发起Post请求 JSON</button>
 
@@ -24,8 +24,8 @@
       const res = await axios(`/api/person`, {
         params: {
           name: 'aaa',
-          age: '20'
-        }
+          age: '20',
+        },
       });
       console.log(res);
     }
@@ -35,8 +35,8 @@
         method: 'post',
         data: {
           name: 'aaa',
-          age: '20'
-        }
+          age: '20',
+        },
       });
       console.log(res);
     }
@@ -46,10 +46,10 @@
         method: 'post',
         data: Qs.stringify({
           name: 'aaa',
-          age: '20'
+          age: '20',
         }),
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       });
       console.log(res);
@@ -58,18 +58,16 @@
     async function handleJSONFetch() {
       const res = await axios(`/api/person`, {
         method: 'post',
-        data: Qs.stringify({
+        data: {
           name: 'aaa',
-          age: '20'
-        }),
+          age: '20',
+        },
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Content-Type': 'application/json',
         },
       });
       console.log(res);
     }
-
-
 
     const fileInput = document.querySelector('#fileInput');
     async function formData() {
@@ -81,11 +79,11 @@
       const res = await axios('/api/person/file', {
         method: 'post',
         data,
-        headers: { 'content-type': 'multipart/form-data' }
+        headers: { 'content-type': 'multipart/form-data' },
       });
       console.log(res);
     }
     fileInput.onchange = formData;
-
   </script>
 </body>
+</html>
