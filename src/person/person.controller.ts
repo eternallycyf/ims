@@ -9,6 +9,7 @@ import {
   Query,
   UploadedFiles,
   UseInterceptors,
+  Inject,
 } from '@nestjs/common';
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
@@ -17,7 +18,9 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 
 @Controller('api/person')
 export class PersonController {
-  constructor(private readonly personService: PersonService) {}
+  // constructor(private readonly personService: PersonService) {}
+  @Inject(PersonService)
+  private personService: PersonService;
 
   @Get(':id')
   findOne(@Param('id') id: number) {

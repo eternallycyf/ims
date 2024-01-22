@@ -25,4 +25,8 @@ export class PersonService {
   remove(id: number) {
     return `This action removes a #${id} person`;
   }
+
+  injectFn() {
+    return 'inject';
+  }
 }

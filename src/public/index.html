@@ -6,6 +6,7 @@
 </head>
 <body>
   <div>http://localhost:3000/static/index.html</div>
+  <button onclick="handleGetInjectFetchId()">注入service</button>
   <button onclick="handleGetFetchId()">url param</button>
   <button onclick="handleGetFetch()">发起Get请求</button>
   <button onclick="handlePostFetch()">发起Post请求</button>
@@ -15,6 +16,11 @@
   <input id="fileInput" type="file" multiple />
 
   <script>
+    async function handleGetInjectFetchId() {
+      const res = await axios(`/`);
+      console.log(res);
+    }
+
     async function handleGetFetchId() {
       const res = await axios(`/api/person/2`);
       console.log(res);

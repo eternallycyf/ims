@@ -1,0 +1,55 @@
+{
+  // 使用 IntelliSense 了解相关属性。 
+  // 悬停以查看现有属性的描述。
+  // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "npm",
+      "request": "launch",
+      "runtimeArgs": [
+        "start",
+        "dev"
+      ],
+      "runtimeExecutable": "npm",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node",
+      "console": "integratedTerminal",
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "static",
+      "url": "http://localhost:3000",
+      "webRoot": "${workspaceRoot}/src/public"
+    },
+    {
+      "name": "canary-前端",
+      "type": "chrome",
+      "request": "attach",
+      "port": 9222,
+      "userDataDir": false,
+      "runtimeExecutable": "canary",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "meteor://💻app/*": "${workspaceFolder}/*",
+        "webpack:///./~/*": "${workspaceFolder}/node_modules/*",
+        "webpack://?:*/*": "${workspaceFolder}/*"
+      },
+      "runtimeArgs": [
+        // 无痕模式 
+        // "--incognito",
+        // 自动打开开发者工具
+        "--auto-open-devtools-for-tabs",
+        "--user-data-dir=${workspaceFolder}/.vscode/chrome"
+      ],
+      "skipFiles": [
+        "${workspaceFolder}/node_modules/**/*.js",
+        "<node_internals>/**/*.js"
+      ],
+      "webRoot": "${workspaceRoot}/src/public"
+    }
+  ]
+}
