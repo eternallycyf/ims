@@ -3,7 +3,7 @@ import { PersonService } from './person/person.service';
 
 @Injectable()
 export class AppService {
-  @Inject(PersonService)
+  @Inject('person_service')
   private PersonService: PersonService;
 
   getHello(): string {

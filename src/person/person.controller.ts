@@ -19,11 +19,26 @@ import { AnyFilesInterceptor } from '@nestjs/platform-express';
 @Controller('api/person')
 export class PersonController {
   // constructor(private readonly personService: PersonService) {}
-  @Inject(PersonService)
-  private personService: PersonService;
+  // constructor(@Inject('person_service') private readonly personService) {}
+
+  // @Inject(PersonService) private personService: PersonService;
+  @Inject('person_service') private personService: PersonService;
+
+  @Inject('person') private readonly person: { name: string; age: number };
+  @Inject('person4')
+  private readonly person4: { name: string; age: number };
+  @Inject('person3')
+  private readonly person3: {
+    name: string;
+    desc: string;
+    Personservice: PersonService;
+  };
+  @Inject('person5')
+  private readonly person5: { name: string; desc: string };
 
   @Get(':id')
   findOne(@Param('id') id: number) {
+    console.log(this);
     return this.personService.findOne(id);
   }
 
