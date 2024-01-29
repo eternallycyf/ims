@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, Global } from '@nestjs/common';
 import { PersonService } from './person.service';
 import { PersonController } from './person.controller';
 import { AppService } from 'src/app.service';

@@ -5,12 +5,23 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "npm",
+      "name": "nest-debug",
+      "port": 9229,
+      "request": "attach",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "type": "node"
+    },
+    {
+      "name": "npm script",
       "request": "launch",
       "runtimeArgs": [
         "start",
         "dev"
       ],
+      // 首行断点
+      // "stopOnEntry": true,
       "runtimeExecutable": "npm",
       "skipFiles": [
         "<node_internals>/**"
@@ -26,7 +37,7 @@
       "webRoot": "${workspaceRoot}/src/public"
     },
     {
-      "name": "canary-前端",
+      "name": "canary",
       "type": "chrome",
       "request": "attach",
       "port": 9222,
