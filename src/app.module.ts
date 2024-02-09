@@ -2,6 +2,7 @@ import {
   BeforeApplicationShutdown,
   Global,
   Module,
+  NestModule,
   OnApplicationBootstrap,
   OnModuleDestroy,
   OnModuleInit,
@@ -9,21 +10,40 @@ import {
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { PersonModule } from './person/person.module';
-import { ModuleRef } from '@nestjs/core';
+import { APP_GUARD, APP_INTERCEPTOR, ModuleRef } from '@nestjs/core';
+import { MiddlewareConsumer } from '@nestjs/common';
+import { LogMiddleware } from './log.middleware';
+import { LoginGuard } from './login.guard';
+import { TimeInterceptor } from './time.interceptor';
 
 @Module({
   imports: [PersonModule],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: LoginGuard,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TimeInterceptor,
+    },
+  ],
 })
 export class AppModule
   implements
     OnModuleInit,
     OnApplicationBootstrap,
     OnModuleDestroy,
-    BeforeApplicationShutdown
+    BeforeApplicationShutdown,
+    NestModule
 {
   constructor(private moduleRef: ModuleRef) {}
+
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(LogMiddleware).forRoutes('aaa*');
+  }
 
   onModuleInit() {
     console.log('OnAppModuleInit');

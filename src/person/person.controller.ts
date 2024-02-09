@@ -10,13 +10,18 @@ import {
   UploadedFiles,
   UseInterceptors,
   Inject,
+  UseFilters,
+  SetMetadata,
 } from '@nestjs/common';
 import { PersonService } from './person.service';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { AnyFilesInterceptor } from '@nestjs/platform-express';
+import { ValidatePipe } from './validate.pipe';
+import { TestFilter } from './test.filter';
 
 @Controller('api/person')
+@SetMetadata('roles', ['user'])
 export class PersonController {
   // constructor(private readonly personService: PersonService) {}
   // constructor(@Inject('person_service') private readonly personService) {}
@@ -37,7 +42,9 @@ export class PersonController {
   private readonly person5: { name: string; desc: string };
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
+  @SetMetadata('roles', ['admin'])
+  @UseFilters(TestFilter)
+  findOne(@Param('id', ValidatePipe) id: number) {
     console.log(this);
     return this.personService.findOne(id);
   }

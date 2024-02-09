@@ -3,6 +3,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 import { AppModule } from './app.module';
 import { NextFunction } from 'express';
+import { LoginGuard } from './login.guard';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -14,6 +15,7 @@ async function bootstrap() {
     console.log('after');
   });
 
+  // app.useGlobalGuards(new LoginGuard());
   await app.listen(3000);
 
   // setTimeout(() => {
