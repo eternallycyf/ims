@@ -1,0 +1,8 @@
+@import (reference) '../color.less';
+@import 'easing';
+
+.bem(@n; @content) {
+  @{namespace}-@{n} {
+    @content();
+  }
+}
