@@ -76,8 +76,20 @@ class APIClient {
     return this.request({ ...config, method: 'PUT' })
   }
 
+  patch<T = any>(config: AxiosRequestConfig): Promise<T> {
+    return this.request({ ...config, method: 'PATCH' })
+  }
+
   delete<T = any>(config: AxiosRequestConfig): Promise<T> {
     return this.request({ ...config, method: 'DELETE' })
+  }
+
+  head<T = any>(config: AxiosRequestConfig): Promise<T> {
+    return this.request({ ...config, method: 'HEAD' })
+  }
+
+  options<T = any>(config: AxiosRequestConfig): Promise<T> {
+    return this.request({ ...config, method: 'OPTIONS' })
   }
 
   request<T = any>(config: AxiosRequestConfig): Promise<T> {

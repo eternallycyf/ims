@@ -1,0 +1,291 @@
+/**
+ * API URL Mapping Generator
+ * 从服务文件中提取 API URLs 并生成 url-map.ts
+ */
+
+import * as fs from 'fs'
+import * as path from 'path'
+import { execSync } from 'child_process'
+import * as process from 'process'
+
+// ----------------- 类型定义 -----------------
+
+interface UrlMapping {
+  key: string
+  url: string
+  hasParams: boolean
+  method: string
+}
+
+// ----------------- 辅助函数 -----------------
+
+/**
+ * 将路径字符串转换为驼峰命名
+ * @example '/auth/signin' -> 'authSignin'
+ */
+function toCamelCase(str: string): string {
+  str = str.replace(/^\/api\//, '') // 移除 /api/ 前缀
+  str = str.replace(/^\//, '') // 移除开头的 /
+  return str
+    .replace(/[/\-_]/g, ' ')
+    .replace(/\s+(\w)/g, (_, char) => char.toUpperCase())
+    .replace(/^\w/, char => char.toLowerCase())
+}
+
+/**
+ * 生成 URL 映射的键名
+ * @example generateKeyName('get', '/auth/signin', false) -> 'getAuthSignin'
+ */
+function generateKeyName(
+  httpMethod: string,
+  urlPath: string,
+  hasParams: boolean,
+): string {
+  const camelPath = toCamelCase(urlPath).trim()
+  const capitalizedPath = camelPath.charAt(0).toUpperCase() + camelPath.slice(1)
+  const baseKey = `${httpMethod}${capitalizedPath}`
+  
+  if (hasParams) {
+    return `${baseKey}ById`
+  }
+  
+  return baseKey
+}
+
+/**
+ * 从 enum 键名推断 HTTP 方法
+ */
+function inferHttpMethod(enumKey: string, fileContent: string): string {
+  const key = enumKey.toLowerCase()
+  
+  // 检查常见模式
+  if (/signin|login/.test(key)) return 'post'
+  if (/signup|register|create/.test(key)) return 'post'
+  if (/delete|remove/.test(key)) return 'delete'
+  if (/update|edit|modify/.test(key)) return 'put'
+  if (/refresh/.test(key)) return 'post'
+  
+  // 在文件中查找该 enum 的使用
+  const usageRegex = new RegExp(`apiClient\\.(\\w+).*${enumKey}`, 'g')
+  const match = usageRegex.exec(fileContent)
+  if (match) {
+    return match[1].toLowerCase()
+  }
+  
+  return 'get'
+}
+
+// ----------------- 提取 API URLs -----------------
+
+/**
+ * 从服务文件中提取 API URL 定义
+ * 支持格式:
+ * - enum 定义: SignIn = '/auth/signin'
+ * - 字符串模板: url: `${UserApi.User}/${id}`
+ * - 直接字符串: url: '/auth/signin'
+ */
+function extractUrlsFromFile(filePath: string): UrlMapping[] {
+  const urls: UrlMapping[] = []
+  
+  try {
+    const content = fs.readFileSync(filePath, 'utf8')
+    
+    // 提取 enum 定义的 API URLs
+    // 匹配: SignIn = '/auth/signin'
+    const enumRegex = /(\w+)\s*=\s*['"`](\/[^'"`]+)['"`]/g
+    let match: RegExpExecArray | null
+    
+    while ((match = enumRegex.exec(content)) !== null) {
+      const enumKey = match[1]
+      const url = match[2]
+      
+      // 生成键名
+      const method = inferHttpMethod(enumKey, content)
+      const hasParams = false
+      const keyName = generateKeyName(method, url, hasParams)
+      
+      urls.push({
+        key: keyName,
+        url,
+        hasParams,
+        method,
+      })
+    }
+    
+    // 提取带参数的 URL
+    // 匹配: url: `${UserApi.User}/${id}`
+    const paramUrlRegex = /url:\s*`([^`]+)`/g
+    while ((match = paramUrlRegex.exec(content)) !== null) {
+      const urlTemplate = match[1]
+      // 检查是否包含变量
+      if (urlTemplate.includes('${')) {
+        // 查找对应的 enum 值
+        const enumMatch = urlTemplate.match(/\$\{(\w+)\.(\w+)\}/)
+        if (enumMatch) {
+          const enumName = enumMatch[2]
+          // 在文件中查找 enum 定义
+          const enumDefRegex = new RegExp(`${enumName}\\s*=\\s*['"\`](\\/[^'"\`]+)['"\`]`)
+          const enumDefMatch = enumDefRegex.exec(content)
+          if (enumDefMatch) {
+            const baseUrl = enumDefMatch[1]
+            const method = inferHttpMethod(enumName, content)
+            const keyName = generateKeyName(method, baseUrl, true)
+            
+            urls.push({
+              key: keyName,
+              url: baseUrl,
+              hasParams: true,
+              method,
+            })
+          }
+        }
+      }
+    }
+    
+  } catch (error) {
+    console.error(`Error processing file ${filePath}:`, error)
+  }
+  
+  return urls
+}
+
+// ----------------- 生成 URL 映射文件 -----------------
+
+/**
+ * 扫描所有服务文件并生成 url-map.ts
+ */
+function generateUrlMap(): void {
+  const apiDir = path.join(process.cwd(), 'src', 'api', 'services')
+  const targetFile = path.join(process.cwd(), 'src', 'config', 'url-map.ts')
+
+  if (!fs.existsSync(apiDir)) {
+    console.error(`❌ API directory not found: ${apiDir}`)
+    return
+  }
+
+  const allUrls: Map<string, UrlMapping> = new Map()
+
+  // 读取所有服务文件
+  const files = fs
+    .readdirSync(apiDir)
+    .filter((f: string) => f.endsWith('.ts') && !f.endsWith('.d.ts'))
+
+  console.log(`\n📂 Found ${files.length} service file(s)`)
+
+  for (const file of files) {
+    const filePath = path.join(apiDir, file)
+    console.log(`   Processing: ${file}`)
+    const urls = extractUrlsFromFile(filePath)
+    
+    for (const urlMapping of urls) {
+      // 避免重复
+      if (!allUrls.has(urlMapping.key)) {
+        allUrls.set(urlMapping.key, urlMapping)
+      }
+    }
+  }
+
+  // 生成 TypeScript 内容
+  const lines: string[] = [
+    '/**',
+    ' * API URL Mapping',
+    ' * Auto-generated by update-api-urls.ts',
+    ' * Do not edit manually',
+    ` * Generated at: ${new Date().toISOString()}`,
+    ' */',
+    '',
+    'export const baseApiUrls = {',
+  ]
+
+  // 按字母顺序排序
+  const sortedEntries = Array.from(allUrls.values()).sort((a, b) => 
+    a.key.localeCompare(b.key)
+  )
+  
+  for (const { key, url, hasParams } of sortedEntries) {
+    if (hasParams) {
+      // 带参数的 URL 生成函数
+      lines.push(`  ${key}: (id: string) => \`${url}/\${id}\`,`)
+    } else {
+      lines.push(`  ${key}: '${url}',`)
+    }
+  }
+
+  lines.push('} as const')
+  lines.push('')
+  lines.push('export type ApiUrlKey = keyof typeof baseApiUrls')
+  lines.push('')
+
+  const content = lines.join('\n')
+
+  // 确保目录存在
+  const configDir = path.dirname(targetFile)
+  if (!fs.existsSync(configDir)) {
+    fs.mkdirSync(configDir, { recursive: true })
+  }
+
+  fs.writeFileSync(targetFile, content, 'utf8')
+  console.log(`\n✅ Generated url-map.ts with ${sortedEntries.length} URL(s)`)
+  console.log(`📁 Output: ${targetFile}`)
+}
+
+// ----------------- 格式化 -----------------
+
+/**
+ * 使用 ESLint 格式化生成的文件
+ */
+function formatFiles(): void {
+  try {
+    console.log('\n📝 Formatting files...')
+    const mapFile = path.join(process.cwd(), 'src', 'config', 'url-map.ts')
+    
+    if (fs.existsSync(mapFile)) {
+      try {
+        // 尝试使用 eslint
+        execSync(`npx eslint --fix "${mapFile}"`, { 
+          stdio: 'pipe',
+          encoding: 'utf8'
+        })
+        console.log('✅ Formatting completed')
+      } catch {
+        // 如果 eslint 失败,尝试 prettier
+        try {
+          execSync(`npx prettier --write "${mapFile}"`, { 
+            stdio: 'pipe',
+            encoding: 'utf8'
+          })
+          console.log('✅ Formatting completed with prettier')
+        } catch {
+          console.warn('⚠️  Formatting skipped (no formatter available)')
+        }
+      }
+    }
+  } catch (error) {
+    console.error('❌ Formatting failed:', error)
+  }
+}
+
+// ----------------- 主函数 -----------------
+
+function main(): void {
+  console.log('🚀 Starting API URL mapping generation...')
+  
+  try {
+    generateUrlMap()
+    formatFiles()
+    console.log('\n🎉 All done!')
+  } catch (error) {
+    console.error('\n❌ Error:', error)
+    process.exit(1)
+  }
+}
+
+// ----------------- 执行 -----------------
+
+// 检查是否直接运行此脚本
+if (typeof require !== 'undefined' && require.main === module) {
+  main()
+}
+
+// ----------------- 导出 -----------------
+export { generateUrlMap, toCamelCase, extractUrlsFromFile }

@@ -4,6 +4,7 @@ import { join } from 'path';
 import { AppModule } from './app.module';
 import { NextFunction } from 'express';
 import { LoginGuard } from './login.guard';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -15,7 +16,22 @@ async function bootstrap() {
     console.log('after');
   });
 
-  // app.useGlobalGuards(new LoginGuard());
+  const config = new DocumentBuilder()
+    .setTitle('Swagger')
+    .setDescription('The Nestjs API')
+    .setVersion('1.0')
+    .addTag('nest')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup('swagger', app, document);
+
+  app.use('/suagger-json', (req, res) => {
+    res.setHeader('Content-Type', 'application/json');
+    res.send(document);
+  });
+
+  app.useGlobalGuards(new LoginGuard());
   await app.listen(3000);
 
   // setTimeout(() => {
